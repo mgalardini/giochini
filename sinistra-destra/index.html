@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sinistra o Destra?</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>⬅️➡️</text></svg>">
+    <style>
+        :root {
+            --pastel-pink: #ffd1dc;
+            --pastel-blue: #a2d2ff;
+            --pastel-yellow: #fdfd96;
+            --pastel-green: #b4f8c8;
+            --pastel-red: #ff968a;
+            --pastel-purple: #c5b3e6;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+            overflow: hidden;
+            background: linear-gradient(135deg, 
+                var(--pastel-pink) 0%, 
+                var(--pastel-yellow) 20%, 
+                var(--pastel-green) 40%, 
+                var(--pastel-blue) 60%, 
+                var(--pastel-purple) 80%, 
+                var(--pastel-pink) 100%);
+            background-size: 400% 400%;
+            animation: rainbowBG 15s ease infinite;
+        }
+
+        @keyframes rainbowBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 40px;
+        }
+
+        .score-board {
+            font-size: 2.5rem;
+            color: #555;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .restart-button {
+            font-size: 2.5rem;
+            background: rgba(255, 255, 255, 0.7);
+            border: none;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .restart-button:active {
+            transform: rotate(-180deg) scale(0.9);
+        }
+
+        .target-display {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 6rem;
+            font-weight: bold;
+            color: #333;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            animation: bounce 2s infinite ease-in-out;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 40px 80px;
+            border-radius: 40px;
+            box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.5), 0 10px 30px rgba(0,0,0,0.05);
+            backdrop-filter: blur(5px);
+            border: 4px white solid;
+            min-width: 500px;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+        }
+
+        .controls {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 80px 60px;
+        }
+
+        .game-button {
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            border: 10px solid white;
+            background-color: white;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.2s, background-color 0.3s, box-shadow 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .game-button:active {
+            transform: scale(0.9);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .arrow {
+            width: 160px;
+            height: 160px;
+            fill: #555;
+        }
+
+        .start-icon {
+            font-size: 10rem;
+            cursor: pointer;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .button-left { margin-right: 20px; }
+        .button-right { margin-left: 20px; }
+
+        /* Animation Classes */
+        .correct {
+            background-color: var(--pastel-green) !important;
+            animation: pulseCorrect 0.5s ease-out;
+        }
+
+        .wrong {
+            background-color: var(--pastel-red) !important;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes pulseCorrect {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.25); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-20px); }
+            40% { transform: translateX(20px); }
+            60% { transform: translateX(-20px); }
+            80% { transform: translateX(20px); }
+        }
+
+        .next-round-anim {
+            animation: fadeOutIn 1s ease-in-out;
+        }
+
+        @keyframes fadeOutIn {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* iPad optimization (Landscape) */
+        @media (max-width: 1180px) and (orientation: landscape) {
+            .target-display { font-size: 5rem; min-width: 400px; }
+            .game-button { width: 220px; height: 220px; }
+            .arrow { width: 130px; height: 130px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <div class="header">
+        <div class="score-board">Punti: <span id="score">0</span></div>
+        <button id="btn-restart" class="restart-button" onclick="resetGame()">🔄</button>
+    </div>
+
+    <div id="target" class="target-display"><span class="start-icon">👆</span></div>
+
+    <div class="controls">
+        <button id="btn-left" class="game-button button-left" onclick="checkAnswer('SINISTRA')">
+            <svg class="arrow" viewBox="0 0 24 24">
+                <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+            </svg>
+        </button>
+        <button id="btn-right" class="game-button button-right" onclick="checkAnswer('DESTRA')">
+            <svg class="arrow" viewBox="0 0 24 24">
+                <path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
+            </svg>
+        </button>
+    </div>
+</div>
+
+<script>
+    let score = 0;
+    let currentTarget = '';
+    let isTransitioning = false;
+    let history = []; // Track last few targets
+
+    // Web Audio Context for synthesized sounds
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        if (type === 'correct') {
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.5);
+        } else if (type === 'wrong') {
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.4);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.4);
+        } else if (type === 'next') {
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(660, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        }
+    }
+
+    function speak(text) {
+        if ('speechSynthesis' in window) {
+            // Cancel any current speech
+            window.speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'it-IT';
+            
+            // Attempt to find a "better" voice (often 'Alice' on macOS/iOS)
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(v => v.lang.startsWith('it') && (v.name.includes('Alice') || v.name.includes('Natural') || v.name.includes('Siri')));
+            
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
+
+            utterance.rate = 0.85; // Natural pace
+            utterance.pitch = 1.15; // Cheerful but not squeaky
+            utterance.volume = 1.0;
+            
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    function nextRound() {
+        isTransitioning = true;
+        const targetEl = document.getElementById('target');
+        
+        targetEl.classList.add('next-round-anim');
+        playSound('next');
+
+        setTimeout(() => {
+            let nextTarget;
+            // logic: no more than 3 times same direction
+            if (history.length >= 3 && history[history.length-1] === history[history.length-2] && history[history.length-2] === history[history.length-3]) {
+                nextTarget = history[history.length-1] === 'SINISTRA' ? 'DESTRA' : 'SINISTRA';
+            } else {
+                nextTarget = Math.random() > 0.5 ? 'SINISTRA' : 'DESTRA';
+            }
+
+            currentTarget = nextTarget;
+            history.push(currentTarget);
+            if (history.length > 5) history.shift();
+
+            targetEl.innerHTML = currentTarget; // Use innerHTML to replace the emoji icon
+            targetEl.classList.remove('next-round-anim');
+            
+            speak(currentTarget);
+            isTransitioning = false;
+        }, 500);
+    }
+
+    function checkAnswer(choice) {
+        if (isTransitioning || currentTarget === '') return;
+
+        const leftBtn = document.getElementById('btn-left');
+        const rightBtn = document.getElementById('btn-right');
+        const btn = choice === 'SINISTRA' ? leftBtn : rightBtn;
+
+        if (choice === currentTarget) {
+            score++;
+            document.getElementById('score').textContent = score;
+            btn.classList.add('correct');
+            playSound('correct');
+            
+            setTimeout(() => {
+                btn.classList.remove('correct');
+                nextRound();
+            }, 800);
+        } else {
+            btn.classList.add('wrong');
+            playSound('wrong');
+            
+            setTimeout(() => {
+                btn.classList.remove('wrong');
+            }, 800);
+        }
+    }
+
+    function resetGame() {
+        score = 0;
+        document.getElementById('score').textContent = score;
+        currentTarget = '';
+        history = [];
+        document.getElementById('target').innerHTML = '<span class="start-icon">👆</span>';
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+    }
+
+    // Initialize game on interaction
+    document.addEventListener('click', function init(e) {
+        // Don't start a new round if we clicked the restart button itself
+        if (e.target.closest('#btn-restart')) return;
+        
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        if (currentTarget === '') {
+            nextRound();
+        }
+    }, { once: false });
+
+    // Pre-fetch voices for better selection
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
+</script>
+
+</body>
+</html>
