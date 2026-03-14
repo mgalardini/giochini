@@ -150,8 +150,8 @@
         }
 
         .mic-button {
-            width: 120px;
-            height: 120px;
+            width: 140px;
+            height: 140px;
             border-radius: 50%;
             border: 10px solid white;
             background-color: var(--pastel-blue);
@@ -160,20 +160,34 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 4rem;
+            position: relative;
             transition: transform 0.2s, background-color 0.3s;
             -webkit-tap-highlight-color: transparent;
+            overflow: hidden;
+        }
+
+        .mic-icon {
+            font-size: 4rem;
+            z-index: 2;
+        }
+
+        #waveform {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
         .mic-button.listening {
             background-color: var(--pastel-red);
-            animation: pulse-mic 1s infinite;
         }
 
-        @keyframes pulse-mic {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+        .mic-button.listening #waveform {
+            opacity: 1;
         }
 
         .skip-button {
@@ -280,7 +294,10 @@
         
         <div class="controls">
             <button id="btn-listen" class="skip-button" onclick="hearAndSkip()">🗣️</button>
-            <button id="btn-mic" class="mic-button" onclick="toggleMic()">🎤</button>
+            <button id="btn-mic" class="mic-button" onclick="toggleMic()">
+                <span class="mic-icon">🎤</span>
+                <canvas id="waveform"></canvas>
+            </button>
         </div>
 
         <div id="speech-status" style="display: none;"></div>
@@ -307,6 +324,67 @@
     let isListening = false;
     let recognition = null;
     let currentLang = 'it';
+    let audioStream = null;
+    let analyser = null;
+    let animationId = null;
+
+    function drawWaveform() {
+        const canvas = document.getElementById('waveform');
+        const ctx = canvas.getContext('2d');
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+
+        function animate() {
+            if (!isListening) return;
+            animationId = requestAnimationFrame(animate);
+            analyser.getByteTimeDomainData(dataArray);
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = 'white';
+            ctx.beginPath();
+
+            const sliceWidth = canvas.width / bufferLength;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = (v * canvas.height) / 2;
+
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+                x += sliceWidth;
+            }
+
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+        }
+        animate();
+    }
+
+    async function startVisualizer() {
+        try {
+            audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const source = audioCtx.createMediaStreamSource(audioStream);
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+            drawWaveform();
+        } catch (err) {
+            console.error('Error starting visualizer:', err);
+        }
+    }
+
+    function stopVisualizer() {
+        if (audioStream) {
+            audioStream.getTracks().forEach(track => track.stop());
+            audioStream = null;
+        }
+        if (animationId) cancelAnimationFrame(animationId);
+    }
 
     const wordLists = {
         it: {
@@ -392,7 +470,40 @@
             const u = new SpeechSynthesisUtterance(text);
             u.lang = currentLang;
             u.rate = 0.8;
+            u.pitch = 1.15;
+            u.volume = 1.0;
+
+            const voices = window.speechSynthesis.getVoices();
+            const preferredVoice = voices.find(v => 
+                v.lang.startsWith(currentLang) && 
+                (v.name.includes('Alice') || v.name.includes('Natural') || v.name.includes('Siri') || v.name.includes('Google') || v.name.includes('Premium'))
+            );
+
+            if (preferredVoice) {
+                u.voice = preferredVoice;
+            } else {
+                // Fallback to any voice of the same language
+                u.voice = voices.find(v => v.lang.startsWith(currentLang));
+            }
+
             window.speechSynthesis.speak(u);
+        }
+    }
+
+    function toggleMic() {
+        if (!recognition) initSpeech();
+        if (isListening) {
+            recognition.stop();
+        } else {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            recognition.lang = currentLang;
+            recognition.start();
+            isListening = true;
+            document.getElementById('btn-mic').classList.add('listening');
+            startVisualizer();
+            const status = document.getElementById('speech-status');
+            status.textContent = translations[currentLang].status;
+            status.style.display = 'block';
         }
     }
 
@@ -415,27 +526,20 @@
             isListening = false;
             document.getElementById('btn-mic').classList.remove('listening');
             document.getElementById('speech-status').style.display = 'none';
+            stopVisualizer();
         };
 
         recognition.onerror = () => {
             isListening = false;
             document.getElementById('btn-mic').classList.remove('listening');
+            stopVisualizer();
         };
     }
 
-    function toggleMic() {
-        if (!recognition) initSpeech();
-        if (isListening) {
-            recognition.stop();
-        } else {
-            recognition.lang = currentLang;
-            recognition.start();
-            isListening = true;
-            document.getElementById('btn-mic').classList.add('listening');
-            const status = document.getElementById('speech-status');
-            status.textContent = translations[currentLang].status;
-            status.style.display = 'block';
-        }
+    function hearAndSkip() {
+        if (isListening) recognition.stop();
+        speak(currentWord);
+        nextRound();
     }
 
     function nextRound(staySameLevel = false) {

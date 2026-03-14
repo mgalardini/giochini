@@ -418,6 +418,8 @@
                 nextRound();
             }, 800);
         } else {
+            score = 0;
+            document.getElementById('score').textContent = score;
             btn.classList.add('wrong');
             playSound('wrong');
             

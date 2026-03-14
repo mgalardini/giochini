@@ -758,6 +758,8 @@
                 nextRound();
             }, 1500);
         } else {
+            score = 0;
+            document.getElementById('score').innerText = score;
             clock.classList.add('wrong-bg');
             playSound('wrong');
 
