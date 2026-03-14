@@ -338,6 +338,20 @@
     let analyser = null;
     let animationId = null;
     let retries = 0;
+    let permissionRequested = false;
+
+    async function requestMicPermission() {
+        if (permissionRequested) return;
+        try {
+            // Request permission by starting and immediately stopping a stream
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(track => track.stop());
+            permissionRequested = true;
+            console.log("Mic permission granted");
+        } catch (err) {
+            console.error("Mic permission denied or error:", err);
+        }
+    }
 
     function drawWaveform() {
         const canvas = document.getElementById('waveform');
@@ -637,6 +651,12 @@
     document.addEventListener('click', function init(e) {
         if (e.target.closest('#btn-restart') || e.target.closest('.lang-switcher')) return;
         if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        // Request mic permission on first click
+        if (!permissionRequested) {
+            requestMicPermission();
+        }
+
         if (!currentWord) {
             document.getElementById('start-overlay').style.display = 'none';
             nextRound();
