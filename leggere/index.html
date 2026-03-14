@@ -237,9 +237,19 @@
             background-color: var(--pastel-green) !important;
             transform: scale(1.1);
         }
+        .retry-anim {
+            background-color: var(--pastel-yellow) !important;
+            animation: shake-light 0.4s ease-in-out;
+        }
         .wrong-anim {
             background-color: var(--pastel-red) !important;
             animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake-light {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
         }
 
         @keyframes shake {
@@ -327,6 +337,7 @@
     let audioStream = null;
     let analyser = null;
     let animationId = null;
+    let retries = 0;
 
     function drawWaveform() {
         const canvas = document.getElementById('waveform');
@@ -334,13 +345,16 @@
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
 
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
-
         function animate() {
             if (!isListening) return;
             animationId = requestAnimationFrame(animate);
             analyser.getByteTimeDomainData(dataArray);
+
+            // Ensure canvas is correctly sized
+            if (canvas.width !== canvas.offsetWidth) {
+                canvas.width = canvas.offsetWidth || 140;
+                canvas.height = canvas.offsetHeight || 140;
+            }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.lineWidth = 4;
@@ -454,6 +468,10 @@
         if (type === 'correct') {
             osc.frequency.setValueAtTime(523, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(1046, audioCtx.currentTime + 0.2);
+        } else if (type === 'retry') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(330, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(440, audioCtx.currentTime + 0.2);
         } else {
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(150, audioCtx.currentTime);
@@ -516,10 +534,20 @@
         recognition = new SpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = false;
+        recognition.maxAlternatives = 3; // Get more options to match against
 
         recognition.onresult = (event) => {
-            const result = event.results[0][0].transcript.toUpperCase().trim();
-            checkAnswer(result);
+            // Check all alternatives for a match
+            let foundMatch = false;
+            const alternatives = event.results[0];
+            for (let i = 0; i < alternatives.length; i++) {
+                const transcript = alternatives[i].transcript.toUpperCase().trim();
+                if (checkMatch(transcript)) {
+                    foundMatch = true;
+                    break;
+                }
+            }
+            processResult(foundMatch);
         };
 
         recognition.onend = () => {
@@ -542,7 +570,41 @@
         nextRound();
     }
 
+    function checkMatch(guess) {
+        const target = currentWord.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+        const cleanedGuess = guess.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+        return (cleanedGuess === target || cleanedGuess.includes(target) || (target.length > 2 && target.includes(cleanedGuess)));
+    }
+
+    function processResult(isCorrect) {
+        const wordEl = document.getElementById('word');
+        if (isCorrect) {
+            score++;
+            document.getElementById('score').textContent = score;
+            wordEl.classList.add('correct-anim');
+            playSound('correct');
+            setTimeout(() => nextRound(), 1000);
+        } else {
+            retries++;
+            if (retries < 3) {
+                wordEl.classList.add('retry-anim');
+                playSound('retry');
+                setTimeout(() => {
+                    wordEl.classList.remove('retry-anim');
+                }, 800);
+            } else {
+                score = 0;
+                document.getElementById('score').textContent = score;
+                wordEl.classList.add('wrong-anim');
+                playSound('wrong');
+                speak(currentWord);
+                setTimeout(() => nextRound(), 1500);
+            }
+        }
+    }
+
     function nextRound(staySameLevel = false) {
+        retries = 0; // Reset retries for new word
         const wordEl = document.getElementById('word');
         wordEl.classList.add('next-anim');
         
@@ -562,33 +624,6 @@
             wordEl.textContent = currentWord;
             wordEl.classList.remove('next-anim', 'correct-anim', 'wrong-anim');
         }, 500);
-    }
-
-    function checkAnswer(guess) {
-        const target = currentWord.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-        const cleanedGuess = guess.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-        
-        const wordEl = document.getElementById('word');
-
-        if (cleanedGuess === target || cleanedGuess.includes(target) || target.includes(cleanedGuess) && target.length > 2) {
-            score++;
-            document.getElementById('score').textContent = score;
-            wordEl.classList.add('correct-anim');
-            playSound('correct');
-            setTimeout(() => nextRound(), 1000);
-        } else {
-            score = 0;
-            document.getElementById('score').textContent = score;
-            wordEl.classList.add('wrong-anim');
-            playSound('wrong');
-            speak(currentWord);
-            setTimeout(() => nextRound(), 1500);
-        }
-    }
-
-    function hearAndSkip() {
-        speak(currentWord);
-        nextRound();
     }
 
     function resetGame() {
