@@ -326,16 +326,17 @@
 
         /* iPad Landscape */
         @media (orientation: landscape) {
-            .game-area { flex-direction: row; gap: 60px; }
-            #clock-container { width: 480px; height: 480px; border-width: 20px; }
+            .game-area { flex-direction: row; gap: clamp(20px, 3vw, 60px); }
+            #clock-container { width: min(480px, 75vh); height: min(480px, 75vh); border-width: 20px; }
+            .controls { flex-shrink: 1; min-width: 0; }
             .number { font-size: 2.8rem; width: 60px; height: 60px; }
             .hour-hand { height: 120px; width: 18px; }
             .minute-hand { height: 180px; width: 12px; }
             .center-dot { width: 28px; height: 28px; }
-            #input-hours { width: 120px; height: 120px; font-size: 4.5rem; }
-            #input-minutes { width: 180px; height: 120px; font-size: 4.5rem; }
-            .action-button { width: 140px; height: 140px; font-size: 5rem; }
-            .input-group { padding: 30px 50px; border-radius: 45px; }
+            #input-hours { width: min(120px, 12vw); height: min(120px, 12vw); font-size: min(4.5rem, 11vw); }
+            #input-minutes { width: min(180px, 18vw); height: min(120px, 12vw); font-size: min(4.5rem, 11vw); }
+            .action-button { width: min(140px, 14vw); height: min(140px, 14vw); font-size: min(5rem, 12vw); }
+            .input-group { padding: 30px min(50px, 4vw); border-radius: 45px; }
             .separator { font-size: 5rem; }
             .start-icon { font-size: 15rem; }
         }
@@ -363,12 +364,12 @@
             <div class="input-group">
                 <div class="input-wrapper">
                     <span class="input-label">Ore</span>
-                    <input type="number" id="input-hours" min="1" max="12" placeholder="0" inputmode="numeric">
+                    <input type="tel" id="input-hours" min="1" max="12" placeholder="0" pattern="[0-9]*" inputmode="numeric">
                 </div>
                 <div class="separator">:</div>
                 <div class="input-wrapper">
                     <span class="input-label">Minuti</span>
-                    <input type="number" id="input-minutes" min="0" max="59" step="5" placeholder="00" inputmode="numeric">
+                    <input type="tel" id="input-minutes" min="0" max="59" step="5" placeholder="00" pattern="[0-9]*" inputmode="numeric">
                 </div>
             </div>
             <div class="button-group">
