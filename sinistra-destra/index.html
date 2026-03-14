@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sinistra o Destra?</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>⬅️➡️</text></svg>">
+    <link rel="apple-touch-icon" id="apple-touch-icon">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Sinistra Destra">
     <style>
         :root {
             --pastel-pink: #ffd1dc;
@@ -224,6 +228,20 @@
 </div>
 
 <script>
+    // Generate apple-touch-icon as PNG for iPad home screen
+    (function() {
+        const c = document.createElement('canvas');
+        c.width = 180; c.height = 180;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#ffd1dc';
+        ctx.beginPath(); ctx.roundRect(0, 0, 180, 180, 36); ctx.fill();
+        ctx.font = '60px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⬅️➡️', 90, 96);
+        document.getElementById('apple-touch-icon').href = c.toDataURL('image/png');
+    })();
+
     let score = 0;
     let currentTarget = '';
     let isTransitioning = false;
