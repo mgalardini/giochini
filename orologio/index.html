@@ -66,6 +66,30 @@
             flex-shrink: 0;
         }
 
+        .lang-switcher {
+            display: flex;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 5px 15px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .lang-btn {
+            font-size: 1.8rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 5px;
+            transition: transform 0.2s;
+            filter: grayscale(0.8);
+        }
+
+        .lang-btn.active {
+            filter: grayscale(0);
+            transform: scale(1.2);
+        }
+
         .game-area {
             flex-grow: 1;
             display: flex;
@@ -162,6 +186,31 @@
             z-index: 2;
         }
 
+        .guess-hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            border-radius: 10px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+
+        .guess-hour-hand {
+            width: 12px;
+            height: 70px;
+            background: rgba(197, 179, 230, 0.8); /* pastel-purple with alpha */
+            z-index: 5;
+        }
+
+        .guess-minute-hand {
+            width: 8px;
+            height: 110px;
+            background: rgba(197, 179, 230, 0.6);
+            z-index: 4;
+        }
+
         .center-dot {
             position: absolute;
             top: 50%;
@@ -171,7 +220,7 @@
             background: #222;
             border-radius: 50%;
             transform: translate(-50%, -50%);
-            z-index: 4;
+            z-index: 6;
         }
 
         /* Input Styles */
@@ -364,6 +413,8 @@
             .number { font-size: 2.8rem; width: 60px; height: 60px; }
             .hour-hand { height: 120px; width: 18px; }
             .minute-hand { height: 180px; width: 12px; }
+            .guess-hour-hand { height: 120px; width: 18px; }
+            .guess-minute-hand { height: 180px; width: 12px; }
             .center-dot { width: 28px; height: 28px; }
             .spin-value { width: 100px; height: 100px; font-size: 4rem; }
             #input-minutes .spin-value { width: 120px; }
@@ -379,7 +430,13 @@
 
 <div class="game-container">
     <div class="header">
-        <div class="score-board">Punti: <span id="score">0</span></div>
+        <div class="score-board"><span id="txt-score">Punti</span>: <span id="score">0</span></div>
+        <div class="lang-switcher">
+            <button class="lang-btn" onclick="setLanguage('it')" title="Italiano">🇮🇹</button>
+            <button class="lang-btn" onclick="setLanguage('de')" title="Deutsch">🇩🇪</button>
+            <button class="lang-btn" onclick="setLanguage('en')" title="English">🇬🇧</button>
+            <button class="lang-btn" onclick="setLanguage('es')" title="Español">🇪🇸</button>
+        </div>
         <button id="btn-restart" class="restart-button" onclick="resetGame()">🔄</button>
     </div>
 
@@ -390,13 +447,15 @@
                 <div class="center-dot"></div>
                 <div id="hour-hand" class="hand hour-hand"></div>
                 <div id="minute-hand" class="hand minute-hand"></div>
+                <div id="guess-hour-hand" class="guess-hand guess-hour-hand" style="display: none;"></div>
+                <div id="guess-minute-hand" class="guess-hand guess-minute-hand" style="display: none;"></div>
             </div>
         </div>
 
         <div class="controls">
             <div class="input-group">
                 <div class="input-wrapper">
-                    <span class="input-label">Ore</span>
+                    <span class="input-label" id="txt-hours">Ore</span>
                     <div class="spinner" id="input-hours">
                         <button class="spin-btn" onclick="spin('hours',1)">▲</button>
                         <div class="spin-value" data-value="">—</div>
@@ -405,7 +464,7 @@
                 </div>
                 <div class="separator">:</div>
                 <div class="input-wrapper">
-                    <span class="input-label">Minuti</span>
+                    <span class="input-label" id="txt-minutes">Minuti</span>
                     <div class="spinner" id="input-minutes">
                         <button class="spin-btn" onclick="spin('minutes',1)">▲</button>
                         <div class="spin-value" data-value="">—</div>
@@ -441,6 +500,42 @@
     let targetMinutes = -1;
     let isTransitioning = false;
 
+    const translations = {
+        it: { title: "Che ore sono?", score: "Punti", hours: "Ore", minutes: "Minuti", oclock: "in punto", and: "e", its: "Sono le" },
+        de: { title: "Wie spät ist es?", score: "Punkte", hours: "Stunden", minutes: "Minuten", oclock: "Uhr", and: "Uhr", its: "Es ist" },
+        en: { title: "What time is it?", score: "Points", hours: "Hours", minutes: "Minutes", oclock: "o'clock", and: "", its: "It's" },
+        es: { title: "¿Qué hora es?", score: "Puntos", hours: "Horas", minutes: "Minutos", oclock: "en punto", and: "y", its: "Son las" }
+    };
+
+    let currentLang = 'it';
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('game_lang', lang);
+        
+        document.title = translations[lang].title;
+        document.getElementById('txt-score').textContent = translations[lang].score;
+        document.getElementById('txt-hours').textContent = translations[lang].hours;
+        document.getElementById('txt-minutes').textContent = translations[lang].minutes;
+
+        // Update active flag
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${lang}'`));
+        });
+    }
+
+    // Auto-detect language
+    (function initLang() {
+        const savedLang = localStorage.getItem('game_lang');
+        if (savedLang && translations[savedLang]) {
+            setLanguage(savedLang);
+        } else {
+            const navLang = navigator.language.split('-')[0];
+            if (translations[navLang]) setLanguage(navLang);
+            else setLanguage('en');
+        }
+    })();
+
     function getSpinValue(id) {
         const el = document.querySelector('#' + id + ' .spin-value');
         const v = el.getAttribute('data-value');
@@ -451,12 +546,40 @@
         const el = document.querySelector('#' + id + ' .spin-value');
         el.setAttribute('data-value', val);
         el.textContent = id === 'input-minutes' ? String(val).padStart(2, '0') : val;
+        updateGuessHands();
     }
 
     function clearSpinValue(id) {
         const el = document.querySelector('#' + id + ' .spin-value');
         el.setAttribute('data-value', '');
         el.textContent = '—';
+        updateGuessHands();
+    }
+
+    function updateGuessHands() {
+        const h = getSpinValue('input-hours');
+        const m = getSpinValue('input-minutes');
+        
+        const gh = document.getElementById('guess-hour-hand');
+        const gm = document.getElementById('guess-minute-hand');
+
+        if (isNaN(h) && isNaN(m)) {
+            gh.style.display = 'none';
+            gm.style.display = 'none';
+            return;
+        }
+
+        gh.style.display = 'block';
+        gm.style.display = 'block';
+
+        const hVal = isNaN(h) ? 0 : h;
+        const mVal = isNaN(m) ? 0 : m;
+
+        const hourDeg = (hVal % 12) * 30 + (mVal / 60) * 30;
+        const minuteDeg = mVal * 6;
+
+        gh.style.transform = `translateX(-50%) rotate(${hourDeg}deg)`;
+        gm.style.transform = `translateX(-50%) rotate(${minuteDeg}deg)`;
     }
 
     function spin(type, dir) {
@@ -484,15 +607,28 @@
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
             
-            // Format minutes for natural speech
-            let mText = m === 0 ? "in punto" : m.toString();
-            const text = `Sono le ${h} e ${mText}`;
+            const t = translations[currentLang];
+            let text = "";
+            
+            if (currentLang === 'it') {
+                let mText = m === 0 ? t.oclock : m.toString();
+                text = `${t.its} ${h} ${t.and} ${mText}`;
+            } else if (currentLang === 'de') {
+                let mText = m === 0 ? "" : m.toString();
+                text = `${t.its} ${h} ${t.oclock} ${mText}`;
+            } else if (currentLang === 'en') {
+                let mText = m === 0 ? t.oclock : m.toString();
+                text = `${t.its} ${h} ${mText}`;
+            } else if (currentLang === 'es') {
+                let mText = m === 0 ? t.oclock : m.toString();
+                text = `${t.its} ${h} ${t.and} ${mText}`;
+            }
             
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'it-IT';
+            utterance.lang = currentLang;
             
             const voices = window.speechSynthesis.getVoices();
-            const preferredVoice = voices.find(v => v.lang.startsWith('it') && (v.name.includes('Alice') || v.name.includes('Natural') || v.name.includes('Siri')));
+            const preferredVoice = voices.find(v => v.lang.startsWith(currentLang) && (v.name.includes('Alice') || v.name.includes('Natural') || v.name.includes('Siri') || v.name.includes('Google')));
             
             if (preferredVoice) {
                 utterance.voice = preferredVoice;

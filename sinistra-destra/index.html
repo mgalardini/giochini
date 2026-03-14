@@ -61,6 +61,30 @@
             padding: 0 40px;
         }
 
+        .lang-switcher {
+            display: flex;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 5px 15px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .lang-btn {
+            font-size: 1.8rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 5px;
+            transition: transform 0.2s;
+            filter: grayscale(0.8);
+        }
+
+        .lang-btn.active {
+            filter: grayscale(0);
+            transform: scale(1.2);
+        }
+
         .score-board {
             font-size: 2.5rem;
             color: #555;
@@ -207,19 +231,25 @@
 
 <div class="game-container">
     <div class="header">
-        <div class="score-board">Punti: <span id="score">0</span></div>
+        <div class="score-board"><span id="txt-score">Punti</span>: <span id="score">0</span></div>
+        <div class="lang-switcher">
+            <button class="lang-btn" onclick="setLanguage('it')" title="Italiano">🇮🇹</button>
+            <button class="lang-btn" onclick="setLanguage('de')" title="Deutsch">🇩🇪</button>
+            <button class="lang-btn" onclick="setLanguage('en')" title="English">🇬🇧</button>
+            <button class="lang-btn" onclick="setLanguage('es')" title="Español">🇪🇸</button>
+        </div>
         <button id="btn-restart" class="restart-button" onclick="resetGame()">🔄</button>
     </div>
 
     <div id="target" class="target-display"><span class="start-icon">👆</span></div>
 
     <div class="controls">
-        <button id="btn-left" class="game-button button-left" onclick="checkAnswer('SINISTRA')">
+        <button id="btn-left" class="game-button button-left" onclick="checkAnswer('LEFT')">
             <svg class="arrow" viewBox="0 0 24 24">
                 <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
         </button>
-        <button id="btn-right" class="game-button button-right" onclick="checkAnswer('DESTRA')">
+        <button id="btn-right" class="game-button button-right" onclick="checkAnswer('RIGHT')">
             <svg class="arrow" viewBox="0 0 24 24">
                 <path d="M4,11V13H16L10.5,18.5L11.92,19.92L19.84,12L11.92,4.08L10.5,5.5L16,11H4Z" />
             </svg>
@@ -246,6 +276,46 @@
     let currentTarget = '';
     let isTransitioning = false;
     let history = []; // Track last few targets
+
+    const translations = {
+        it: { title: "Sinistra o Destra?", score: "Punti", LEFT: "SINISTRA", RIGHT: "DESTRA" },
+        de: { title: "Links oder Rechts?", score: "Punkte", LEFT: "LINKS", RIGHT: "RECHTS" },
+        en: { title: "Left or Right?", score: "Points", LEFT: "LEFT", RIGHT: "RIGHT" },
+        es: { title: "¿Izquierda o Derecha?", score: "Puntos", LEFT: "IZQUIERDA", RIGHT: "DERECHA" }
+    };
+
+    let currentLang = 'it';
+
+    function setLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('game_lang_sd', lang);
+        
+        document.title = translations[lang].title;
+        document.getElementById('txt-score').textContent = translations[lang].score;
+
+        // Update target if visible
+        const targetEl = document.getElementById('target');
+        if (currentTarget && !targetEl.querySelector('.start-icon')) {
+            targetEl.textContent = translations[currentLang][currentTarget];
+        }
+
+        // Update active flag
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${lang}'`));
+        });
+    }
+
+    // Auto-detect language
+    (function initLang() {
+        const savedLang = localStorage.getItem('game_lang_sd');
+        if (savedLang && translations[savedLang]) {
+            setLanguage(savedLang);
+        } else {
+            const navLang = navigator.language.split('-')[0];
+            if (translations[navLang]) setLanguage(navLang);
+            else setLanguage('en');
+        }
+    })();
 
     // Web Audio Context for synthesized sounds
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -285,24 +355,19 @@
 
     function speak(text) {
         if ('speechSynthesis' in window) {
-            // Cancel any current speech
             window.speechSynthesis.cancel();
-            
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'it-IT';
+            utterance.lang = currentLang;
             
-            // Attempt to find a "better" voice (often 'Alice' on macOS/iOS)
             const voices = window.speechSynthesis.getVoices();
-            const preferredVoice = voices.find(v => v.lang.startsWith('it') && (v.name.includes('Alice') || v.name.includes('Natural') || v.name.includes('Siri')));
+            const preferredVoice = voices.find(v => v.lang.startsWith(currentLang) && (v.name.includes('Alice') || v.name.includes('Natural') || v.name.includes('Siri') || v.name.includes('Google')));
             
             if (preferredVoice) {
                 utterance.voice = preferredVoice;
             }
 
-            utterance.rate = 0.85; // Natural pace
-            utterance.pitch = 1.15; // Cheerful but not squeaky
-            utterance.volume = 1.0;
-            
+            utterance.rate = 0.85;
+            utterance.pitch = 1.15;
             window.speechSynthesis.speak(utterance);
         }
     }
@@ -316,21 +381,21 @@
 
         setTimeout(() => {
             let nextTarget;
-            // logic: no more than 3 times same direction
             if (history.length >= 3 && history[history.length-1] === history[history.length-2] && history[history.length-2] === history[history.length-3]) {
-                nextTarget = history[history.length-1] === 'SINISTRA' ? 'DESTRA' : 'SINISTRA';
+                nextTarget = history[history.length-1] === 'LEFT' ? 'RIGHT' : 'LEFT';
             } else {
-                nextTarget = Math.random() > 0.5 ? 'SINISTRA' : 'DESTRA';
+                nextTarget = Math.random() > 0.5 ? 'LEFT' : 'RIGHT';
             }
 
             currentTarget = nextTarget;
             history.push(currentTarget);
             if (history.length > 5) history.shift();
 
-            targetEl.innerHTML = currentTarget; // Use innerHTML to replace the emoji icon
+            const localizedText = translations[currentLang][currentTarget];
+            targetEl.textContent = localizedText;
             targetEl.classList.remove('next-round-anim');
             
-            speak(currentTarget);
+            speak(localizedText);
             isTransitioning = false;
         }, 500);
     }
@@ -340,7 +405,7 @@
 
         const leftBtn = document.getElementById('btn-left');
         const rightBtn = document.getElementById('btn-right');
-        const btn = choice === 'SINISTRA' ? leftBtn : rightBtn;
+        const btn = choice === 'LEFT' ? leftBtn : rightBtn;
 
         if (choice === currentTarget) {
             score++;
