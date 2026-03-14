@@ -209,27 +209,55 @@
             letter-spacing: 1px;
         }
 
-        input[type="number"] {
-            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
-            font-size: 3.5rem;
-            text-align: center;
+        .spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .spin-btn {
+            width: 70px;
+            height: 44px;
             border: none;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.85);
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #555;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            transition: background 0.15s;
+            line-height: 1;
+        }
+
+        .spin-btn:active {
+            background: rgba(255,255,255,1);
+            transform: scale(0.93);
+        }
+
+        .spin-value {
+            width: 80px;
+            height: 80px;
             border-radius: 20px;
             background: white;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+            font-size: 3.2rem;
+            font-weight: 900;
             color: #333;
-            outline: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
-            -moz-appearance: textfield;
+            transition: background-color 0.3s;
         }
 
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
-        #input-hours { width: 90px; height: 90px; }
-        #input-minutes { width: 130px; height: 90px; }
+        #input-minutes .spin-value { width: 100px; }
 
         .separator {
             font-size: 4rem;
@@ -331,16 +359,17 @@
         /* iPad Landscape */
         @media (orientation: landscape) {
             .game-area { flex-direction: row; gap: clamp(20px, 3vw, 60px); }
-            #clock-container { width: min(480px, 75vh); height: min(480px, 75vh); border-width: 20px; }
+            #clock-container { width: min(480px, 70vh); height: min(480px, 70vh); border-width: 20px; }
             .controls { flex-shrink: 1; min-width: 0; }
             .number { font-size: 2.8rem; width: 60px; height: 60px; }
             .hour-hand { height: 120px; width: 18px; }
             .minute-hand { height: 180px; width: 12px; }
             .center-dot { width: 28px; height: 28px; }
-            #input-hours { width: min(120px, 12vw); height: min(120px, 12vw); font-size: min(4.5rem, 11vw); }
-            #input-minutes { width: min(180px, 18vw); height: min(120px, 12vw); font-size: min(4.5rem, 11vw); }
-            .action-button { width: min(140px, 14vw); height: min(140px, 14vw); font-size: min(5rem, 12vw); }
-            .input-group { padding: 30px min(50px, 4vw); border-radius: 45px; }
+            .spin-value { width: 100px; height: 100px; font-size: 4rem; }
+            #input-minutes .spin-value { width: 120px; }
+            .spin-btn { width: 90px; height: 54px; font-size: 2.2rem; }
+            .action-button { width: min(120px, 14vw); height: min(120px, 14vw); font-size: min(4.5rem, 12vw); }
+            .input-group { padding: 20px min(40px, 4vw); border-radius: 45px; }
             .separator { font-size: 5rem; }
             .start-icon { font-size: 15rem; }
         }
@@ -368,12 +397,20 @@
             <div class="input-group">
                 <div class="input-wrapper">
                     <span class="input-label">Ore</span>
-                    <input type="tel" id="input-hours" min="1" max="12" placeholder="0" pattern="[0-9]*" inputmode="numeric">
+                    <div class="spinner" id="input-hours">
+                        <button class="spin-btn" onclick="spin('hours',1)">▲</button>
+                        <div class="spin-value" data-value="">—</div>
+                        <button class="spin-btn" onclick="spin('hours',-1)">▼</button>
+                    </div>
                 </div>
                 <div class="separator">:</div>
                 <div class="input-wrapper">
                     <span class="input-label">Minuti</span>
-                    <input type="tel" id="input-minutes" min="0" max="59" step="5" placeholder="00" pattern="[0-9]*" inputmode="numeric">
+                    <div class="spinner" id="input-minutes">
+                        <button class="spin-btn" onclick="spin('minutes',1)">▲</button>
+                        <div class="spin-value" data-value="">—</div>
+                        <button class="spin-btn" onclick="spin('minutes',-1)">▼</button>
+                    </div>
                 </div>
             </div>
             <div class="button-group">
@@ -403,6 +440,37 @@
     let targetHours = -1;
     let targetMinutes = -1;
     let isTransitioning = false;
+
+    function getSpinValue(id) {
+        const el = document.querySelector('#' + id + ' .spin-value');
+        const v = el.getAttribute('data-value');
+        return v === '' ? NaN : parseInt(v);
+    }
+
+    function setSpinValue(id, val) {
+        const el = document.querySelector('#' + id + ' .spin-value');
+        el.setAttribute('data-value', val);
+        el.textContent = id === 'input-minutes' ? String(val).padStart(2, '0') : val;
+    }
+
+    function clearSpinValue(id) {
+        const el = document.querySelector('#' + id + ' .spin-value');
+        el.setAttribute('data-value', '');
+        el.textContent = '—';
+    }
+
+    function spin(type, dir) {
+        const id = type === 'hours' ? 'input-hours' : 'input-minutes';
+        let val = getSpinValue(id);
+        if (type === 'hours') {
+            if (isNaN(val)) val = dir > 0 ? 1 : 12;
+            else { val += dir; if (val > 12) val = 1; if (val < 1) val = 12; }
+        } else {
+            if (isNaN(val)) val = dir > 0 ? 0 : 55;
+            else { val += dir * 5; if (val > 55) val = 0; if (val < 0) val = 55; }
+        }
+        setSpinValue(id, val);
+    }
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -490,8 +558,8 @@
         document.getElementById('start-overlay').style.display = 'none';
         playSound('next');
         
-        document.getElementById('input-hours').value = '';
-        document.getElementById('input-minutes').value = '';
+        clearSpinValue('input-hours');
+        clearSpinValue('input-minutes');
 
         targetHours = Math.floor(Math.random() * 12) + 1;
         targetMinutes = Math.floor(Math.random() * 12) * 5;
@@ -524,10 +592,10 @@
     function checkAnswer() {
         if (isTransitioning || targetHours === -1) return;
 
-        const hInputEl = document.getElementById('input-hours');
-        const mInputEl = document.getElementById('input-minutes');
-        const hInput = parseInt(hInputEl.value);
-        const mInput = parseInt(mInputEl.value);
+        const hVal = document.querySelector('#input-hours .spin-value');
+        const mVal = document.querySelector('#input-minutes .spin-value');
+        const hInput = getSpinValue('input-hours');
+        const mInput = getSpinValue('input-minutes');
         const clock = document.getElementById('clock-container');
 
         if (isNaN(hInput) || isNaN(mInput)) return;
@@ -543,14 +611,14 @@
             score++;
             document.getElementById('score').innerText = score;
             clock.classList.add('correct-bg');
-            hInputEl.classList.add('correct-input');
-            mInputEl.classList.add('correct-input');
+            hVal.classList.add('correct-input');
+            mVal.classList.add('correct-input');
             playSound('correct');
             speakTime(targetHours, targetMinutes);
             setTimeout(() => {
                 clock.classList.remove('correct-bg');
-                hInputEl.classList.remove('correct-input');
-                mInputEl.classList.remove('correct-input');
+                hVal.classList.remove('correct-input');
+                mVal.classList.remove('correct-input');
                 nextRound();
             }, 1500);
         } else {
@@ -558,23 +626,23 @@
             playSound('wrong');
 
             if (isHourCorrect) {
-                hInputEl.classList.add('correct-input');
+                hVal.classList.add('correct-input');
             } else {
-                hInputEl.classList.add('wrong-input');
-                setTimeout(() => { hInputEl.value = ''; }, 400);
+                hVal.classList.add('wrong-input');
+                setTimeout(() => { clearSpinValue('input-hours'); }, 400);
             }
 
             if (isMinuteCorrect) {
-                mInputEl.classList.add('correct-input');
+                mVal.classList.add('correct-input');
             } else {
-                mInputEl.classList.add('wrong-input');
-                setTimeout(() => { mInputEl.value = ''; }, 400);
+                mVal.classList.add('wrong-input');
+                setTimeout(() => { clearSpinValue('input-minutes'); }, 400);
             }
 
             setTimeout(() => {
                 clock.classList.remove('wrong-bg');
-                hInputEl.classList.remove('correct-input', 'wrong-input');
-                mInputEl.classList.remove('correct-input', 'wrong-input');
+                hVal.classList.remove('correct-input', 'wrong-input');
+                mVal.classList.remove('correct-input', 'wrong-input');
             }, 800);
         }
     }
@@ -585,8 +653,8 @@
         targetHours = -1;
         targetMinutes = -1;
         document.getElementById('start-overlay').style.display = 'flex';
-        document.getElementById('input-hours').value = '';
-        document.getElementById('input-minutes').value = '';
+        clearSpinValue('input-hours');
+        clearSpinValue('input-minutes');
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
         }
