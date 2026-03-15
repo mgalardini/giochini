@@ -59,6 +59,7 @@
             justify-content: space-between;
             align-items: center;
             padding: 0 40px;
+            position: relative;
         }
 
         .lang-switcher {
@@ -86,12 +87,16 @@
         }
 
         .score-board {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
             font-size: 2.5rem;
             color: #555;
             background: rgba(255, 255, 255, 0.7);
             padding: 10px 20px;
             border-radius: 20px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            white-space: nowrap;
         }
 
         .restart-button {
@@ -231,13 +236,13 @@
 
 <div class="game-container">
     <div class="header">
-        <div class="score-board"><span id="txt-score">Punti</span>: <span id="score">0</span></div>
         <div class="lang-switcher">
             <button class="lang-btn" onclick="setLanguage('it')" title="Italiano">🇮🇹</button>
             <button class="lang-btn" onclick="setLanguage('de')" title="Deutsch">🇩🇪</button>
             <button class="lang-btn" onclick="setLanguage('en')" title="English">🇬🇧</button>
             <button class="lang-btn" onclick="setLanguage('es')" title="Español">🇪🇸</button>
         </div>
+        <div class="score-board"><span id="txt-score">Punti</span>: <span id="score">0</span></div>
         <button id="btn-restart" class="restart-button" onclick="resetGame()">🔄</button>
     </div>
 

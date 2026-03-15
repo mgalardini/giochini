@@ -87,15 +87,6 @@
             transform: scale(1.2);
         }
 
-        .score-board {
-            font-size: 2.5rem;
-            color: #444;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 10px 25px;
-            border-radius: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
         .restart-button {
             font-size: 2.5rem;
             background: rgba(255, 255, 255, 0.8);
@@ -122,7 +113,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            gap: 40px;
+            gap: 60px;
             width: 100%;
         }
 
@@ -140,18 +131,25 @@
             transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             min-width: 300px;
             text-align: center;
-            letter-spacing: 10px;
-        }
-
-        .controls {
+            letter-spacing: 5px;
             display: flex;
-            gap: 30px;
-            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
-        .mic-button {
-            width: 140px;
-            height: 140px;
+        .letter {
+            display: inline-block;
+            transition: transform 0.3s, color 0.3s;
+        }
+
+        .letter.active {
+            color: var(--pastel-red);
+            transform: scale(1.3) translateY(-10px);
+        }
+
+        .speak-button {
+            width: 160px;
+            height: 160px;
             border-radius: 50%;
             border: 10px solid white;
             background-color: var(--pastel-blue);
@@ -160,50 +158,20 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            position: relative;
+            font-size: 6rem;
             transition: transform 0.2s, background-color 0.3s;
             -webkit-tap-highlight-color: transparent;
-            overflow: hidden;
         }
 
-        .mic-icon {
-            font-size: 4rem;
-            z-index: 2;
+        .speak-button:active {
+            transform: scale(0.9);
         }
 
-        #waveform {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .mic-button.listening {
-            background-color: var(--pastel-red);
-        }
-
-        .mic-button.listening #waveform {
-            opacity: 1;
-        }
-
-        .skip-button {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            border: 8px solid white;
-            background-color: var(--pastel-yellow);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 3rem;
-            transition: transform 0.2s;
-            -webkit-tap-highlight-color: transparent;
+        .speak-button.disabled {
+            filter: grayscale(0.5);
+            opacity: 0.7;
+            cursor: default;
+            pointer-events: none;
         }
 
         .start-overlay {
@@ -232,55 +200,16 @@
             100% { transform: scale(1); }
         }
 
-        /* Feedback States */
-        .correct-anim {
-            background-color: var(--pastel-green) !important;
-            transform: scale(1.1);
-        }
-        .retry-anim {
-            background-color: var(--pastel-yellow) !important;
-            animation: shake-light 0.4s ease-in-out;
-        }
-        .wrong-anim {
-            background-color: var(--pastel-red) !important;
-            animation: shake 0.5s ease-in-out;
-        }
-
-        @keyframes shake-light {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-20px); }
-            40% { transform: translateX(20px); }
-            60% { transform: translateX(-20px); }
-            80% { transform: translateX(20px); }
-        }
-
         .next-anim {
             opacity: 0;
             transform: translateY(30px) scale(0.8);
         }
 
-        #speech-status {
-            position: absolute;
-            bottom: 30px;
-            font-size: 1.5rem;
-            color: #666;
-            background: rgba(255,255,255,0.5);
-            padding: 5px 20px;
-            border-radius: 15px;
-        }
-
         /* iPad Landscape */
         @media (orientation: landscape) {
-            .game-area { gap: 60px; }
+            .game-area { gap: 80px; }
             .word-display { font-size: 12rem; padding: 60px 120px; }
-            .mic-button { width: 150px; height: 150px; font-size: 5rem; }
-            .skip-button { width: 120px; height: 120px; font-size: 4rem; }
+            .speak-button { width: 180px; height: 180px; font-size: 7rem; }
         }
     </style>
 </head>
@@ -288,7 +217,6 @@
 
 <div class="game-container">
     <div class="header">
-        <div class="score-board"><span id="txt-score">Punti</span>: <span id="score">0</span></div>
         <div class="lang-switcher">
             <button class="lang-btn" onclick="setLanguage('it')" title="Italiano">🇮🇹</button>
             <button class="lang-btn" onclick="setLanguage('de')" title="Deutsch">🇩🇪</button>
@@ -302,15 +230,7 @@
         <div id="start-overlay" class="start-overlay"><span class="start-icon">👆</span></div>
         <div id="word" class="word-display">...</div>
         
-        <div class="controls">
-            <button id="btn-listen" class="skip-button" onclick="hearAndSkip()">🗣️</button>
-            <button id="btn-mic" class="mic-button" onclick="toggleMic()">
-                <span class="mic-icon">🎤</span>
-                <canvas id="waveform"></canvas>
-            </button>
-        </div>
-
-        <div id="speech-status" style="display: none;"></div>
+        <button id="btn-speak" class="speak-button" onclick="startSpelling()">🗣️</button>
     </div>
 </div>
 
@@ -329,179 +249,70 @@
         document.getElementById('apple-touch-icon').href = c.toDataURL('image/png');
     })();
 
-    let score = 0;
+    let wordCounter = 0;
     let currentWord = '';
-    let isListening = false;
-    let recognition = null;
     let currentLang = 'it';
-    let audioStream = null;
-    let analyser = null;
-    let animationId = null;
-    let retries = 0;
-    let permissionRequested = false;
-
-    async function requestMicPermission() {
-        if (permissionRequested) return;
-        try {
-            // Request permission by starting and immediately stopping a stream
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            stream.getTracks().forEach(track => track.stop());
-            permissionRequested = true;
-            console.log("Mic permission granted");
-        } catch (err) {
-            console.error("Mic permission denied or error:", err);
-        }
-    }
-
-    function drawWaveform() {
-        const canvas = document.getElementById('waveform');
-        const ctx = canvas.getContext('2d');
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-
-        function animate() {
-            if (!isListening) return;
-            animationId = requestAnimationFrame(animate);
-            analyser.getByteTimeDomainData(dataArray);
-
-            // Ensure canvas is correctly sized
-            if (canvas.width !== canvas.offsetWidth) {
-                canvas.width = canvas.offsetWidth || 140;
-                canvas.height = canvas.offsetHeight || 140;
-            }
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.lineWidth = 4;
-            ctx.strokeStyle = 'white';
-            ctx.beginPath();
-
-            const sliceWidth = canvas.width / bufferLength;
-            let x = 0;
-
-            for (let i = 0; i < bufferLength; i++) {
-                const v = dataArray[i] / 128.0;
-                const y = (v * canvas.height) / 2;
-
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-                x += sliceWidth;
-            }
-
-            ctx.lineTo(canvas.width, canvas.height / 2);
-            ctx.stroke();
-        }
-        animate();
-    }
-
-    async function startVisualizer() {
-        try {
-            audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const source = audioCtx.createMediaStreamSource(audioStream);
-            analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 256;
-            source.connect(analyser);
-            drawWaveform();
-        } catch (err) {
-            console.error('Error starting visualizer:', err);
-        }
-    }
-
-    function stopVisualizer() {
-        if (audioStream) {
-            audioStream.getTracks().forEach(track => track.stop());
-            audioStream = null;
-        }
-        if (animationId) cancelAnimationFrame(animationId);
-    }
+    let isSpelling = false;
 
     const wordLists = {
         it: {
-            3: ["APE", "BUE", "VIA", "ZOO", "SCI", "ORA", "LUI", "NOI", "VOI", "MIO", "REI", "BLU", "AGO", "ERA", "PIO"],
-            4: ["MELA", "SOLE", "CANE", "PANE", "CASA", "MARE", "LUCE", "PERO", "CODA", "NASO", "MANO", "VISO", "ERBA", "ORSO", "NIDO", "VINO"],
+            3: ["APE", "BUE", "VIA", "BLU", "AGO", "ERA", "PIO", "MIO", "TUA", "ZIO", "ZIA", "NON", "CON", "CHI", "MAI"],
+            4: ["MELA", "SOLE", "CANE", "PANE", "CASA", "MARE", "LUCE", "PERO", "CODA", "NASO", "MANO", "VISO", "ERBA", "ORSO", "NIDO"],
             5: ["GATTO", "LATTE", "LIBRO", "FIORE", "PORTA", "TRENO", "AEREO", "FUOCO", "ACQUA", "CORPO", "BOSCO", "VOLPE", "BARCA", "CAMPO", "FESTA"],
-            6: ["SCUOLA", "AMICO", "PIANTA", "FRUTTO", "STRADA", "ESTATE", "NONNO", "NONNA", "PIATTO", "TAVOLO", "MATITA", "LAVORO", "SOGNO", "MESSA", "CUCINA"],
-            7: ["GIARDINO", "BAMBINO", "FINESTRA", "CASTELLO", "ELEFANTE", "STELLA", "LIMONE", "CILIEGIA", "PULCINO", "QUADERNO", "BISCARI", "CANCELLO", "MONTAGNA", "INVERNO", "SQUADRA"]
+            6: ["SCUOLA", "AMICO", "PIANTA", "FRUTTO", "STRADA", "ESTATE", "NONNO", "NONNA", "PIATTO", "TAVOLO", "MATITA", "LAVORO", "SOGNO", "CUCINA", "LIMONE"],
+            7: ["GIARDINO", "BAMBINO", "FINESTRA", "CASTELLO", "ELEFANTE", "STELLA", "PULCINO", "QUADERNO", "CANCELLO", "MONTAGNA", "INVERNO", "SQUADRA", "BANANA", "FRUTTA", "SABATO"]
         },
         en: {
             3: ["CAT", "DOG", "SUN", "BOX", "CAR", "RED", "BIG", "ANT", "BOY", "SKY", "ICE", "TEA", "HAT", "FLY", "CUP"],
-            4: ["BOOK", "MILK", "FISH", "TREE", "HOME", "BALL", "STAR", "BLUE", "CAKE", "BIRD", "MOON", "FIRE", "SNOW", "DUCK", "COLD", "WIND"],
+            4: ["BOOK", "MILK", "FISH", "TREE", "HOME", "BALL", "STAR", "BLUE", "CAKE", "BIRD", "MOON", "FIRE", "SNOW", "DUCK", "COLD"],
             5: ["APPLE", "BREAD", "WATER", "HOUSE", "TRAIN", "GREEN", "SMALL", "MOUSE", "PHONE", "PAPER", "CHAIR", "PIANO", "CLOCK", "TABLE", "SMILE"],
             6: ["SCHOOL", "FRIEND", "FLOWER", "ORANGE", "WINDOW", "SUMMER", "WINTER", "BANANA", "ANIMAL", "CIRCUS", "POTATO", "TOMATO", "GUITAR", "BOTTLE", "ROCKET"],
             7: ["GARDEN", "KITCHEN", "MORNING", "PICTURE", "RAINBOW", "CHICKEN", "AIRPORT", "DOLPHIN", "PUMPKIN", "HOLIDAY", "FEATHER", "SCISSOR", "LIBRARY", "WEATHER", "HAMSTER"]
         },
         de: {
             3: ["ICE", "SEE", "HUT", "ROT", "TAG", "TOR", "UND", "ICH", "OHR", "AST", "BÄR", "GAS", "NEU", "AUS", "ALT"],
-            4: ["BROT", "HAUS", "BAUM", "FISCH", "KIND", "GELB", "HAND", "MOND", "REIS", "SALZ", "KALT", "WARM", "BLAU", "GELD", "LAND", "BERG"],
+            4: ["BROT", "HAUS", "BAUM", "FISCH", "KIND", "GELB", "HAND", "MOND", "REIS", "SALZ", "KALT", "WARM", "BLAU", "GELD", "LAND"],
             5: ["APFEL", "MILCH", "STADT", "STERN", "BLUME", "VOGEL", "SONNE", "FEUER", "WASSER", "TISCH", "STUHL", "NACHT", "LAMPE", "TIGER", "KÜCHE"],
             6: ["SCHULE", "FREUND", "GARTEN", "WASSER", "HERBST", "WINTER", "REGEN", "WOLKE", "KIRSCHE", "BANANE", "BRUDER", "FENSTER", "SOMMER", "STRAND", "SCHNEE"],
-            7: ["BAHNHOF", "SCHLOSS", "STRASSE", "ZEITUNG", "FLUGZEUG", "ELEFANT", "KROKODIL", "PULOVER", "TRAKTOR", "ZIMMERI", "SCHRANK", "SPIEGEL", "GIRAFFE", "KLAVIER", "TOMATEN"]
+            7: ["BAHNHOF", "SCHLOSS", "STRASSE", "ZEITUNG", "FLUGZEUG", "ELEFANT", "KROKODIL", "PULOVER", "TRAKTOR", "SCHRANK", "SPIEGEL", "GIRAFFE", "KLAVIER", "TOMATEN"]
         },
         es: {
             3: ["SOL", "PAN", "VER", "LUZ", "MAR", "CON", "UNO", "DOS", "REY", "ORO", "PAZ", "DIA", "SER", "PIO", "FIN"],
-            4: ["CASA", "GATO", "AZUL", "PAPA", "MAMA", "LUNA", "ROJO", "MESA", "PELO", "CARA", "OJO", "PERA", "RANA", "TREN", "VINO", "BOLA"],
+            4: ["CASA", "GATO", "AZUL", "PAPA", "MAMA", "LUNA", "ROJO", "MESA", "PELO", "CARA", "OJO", "PERA", "RANA", "TREN", "VINO"],
             5: ["PERRO", "LECHE", "LIBRO", "FLOR", "VERDE", "AGUA", "ARBOL", "RATON", "QUESO", "TIGRE", "MANO", "FUEGO", "COCHE", "RADIO", "PLAYA"],
             6: ["ESCUELA", "AMIGO", "PUERTA", "CIUDAD", "TIEMPO", "VERANO", "PLATO", "FRUTA", "PUEBLO", "CAMINO", "PAJARO", "COMIDA", "CABELLO", "DIBUJO", "ESTRELLA"],
             7: ["JARDIN", "VENTANA", "NARANJA", "PLATANO", "HELADO", "MAÑANA", "GALLETA", "CABALLO", "PISCINA", "CEREBRO", "COLEGIO", "TRABAJO", "CORAZON", "MOCHILA", "PELICULA"]
         }
     };
 
-    const translations = {
-        it: { title: "Leggere", score: "Punti", status: "Ti ascolto...", error: "Riprova!" },
-        en: { title: "Read", score: "Points", status: "Listening...", error: "Try again!" },
-        de: { title: "Lesen", score: "Punkte", status: "Höre zu...", error: "Nochmal!" },
-        es: { title: "Leer", score: "Puntos", status: "Escuchando...", error: "¡Otra vez!" }
-    };
-
     function setLanguage(lang) {
         currentLang = lang;
         localStorage.setItem('game_lang_leggere', lang);
-        document.title = translations[lang].title;
-        document.getElementById('txt-score').textContent = translations[lang].score;
         document.querySelectorAll('.lang-btn').forEach(btn => {
             btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${lang}'`));
         });
-        if (currentWord) nextRound(true); // reload word for new language
+        if (currentWord) nextRound();
     }
 
     // Auto-detect language
     (function initLang() {
         const savedLang = localStorage.getItem('game_lang_leggere');
-        if (savedLang && translations[savedLang]) setLanguage(savedLang);
+        if (savedLang && wordLists[savedLang]) setLanguage(savedLang);
         else {
             const navLang = navigator.language.split('-')[0];
-            if (translations[navLang]) setLanguage(navLang);
+            if (wordLists[navLang]) setLanguage(navLang);
             else setLanguage('en');
         }
     })();
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playSound(type) {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        if (type === 'correct') {
-            osc.frequency.setValueAtTime(523, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1046, audioCtx.currentTime + 0.2);
-        } else if (type === 'retry') {
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(330, audioCtx.currentTime);
-            osc.frequency.linearRampToValueAtTime(440, audioCtx.currentTime + 0.2);
-        } else {
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.3);
-        }
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
-    }
 
-    function speak(text) {
+    function speak(text, rate = 0.8, onEnd) {
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
             const u = new SpeechSynthesisUtterance(text);
             u.lang = currentLang;
-            u.rate = 0.8;
+            u.rate = rate;
             u.pitch = 1.15;
             u.volume = 1.0;
 
@@ -511,157 +322,98 @@
                 (v.name.includes('Alice') || v.name.includes('Natural') || v.name.includes('Siri') || v.name.includes('Google') || v.name.includes('Premium'))
             );
 
-            if (preferredVoice) {
-                u.voice = preferredVoice;
-            } else {
-                // Fallback to any voice of the same language
-                u.voice = voices.find(v => v.lang.startsWith(currentLang));
-            }
+            if (preferredVoice) u.voice = preferredVoice;
+            else u.voice = voices.find(v => v.lang.startsWith(currentLang));
 
+            if (onEnd) u.onend = onEnd;
             window.speechSynthesis.speak(u);
         }
     }
 
-    function toggleMic() {
-        if (!recognition) initSpeech();
-        if (isListening) {
-            recognition.stop();
-        } else {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            recognition.lang = currentLang;
-            recognition.start();
-            isListening = true;
-            document.getElementById('btn-mic').classList.add('listening');
-            startVisualizer();
-            const status = document.getElementById('speech-status');
-            status.textContent = translations[currentLang].status;
-            status.style.display = 'block';
-        }
-    }
+    function startSpelling() {
+        if (isSpelling) return;
+        isSpelling = true;
+        document.getElementById('btn-speak').classList.add('disabled');
+        
+        const letters = document.querySelectorAll('.letter');
+        let i = 0;
 
-    function initSpeech() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert("Speech recognition not supported in this browser.");
-            return;
-        }
-        recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 3; // Get more options to match against
-
-        recognition.onresult = (event) => {
-            // Check all alternatives for a match
-            let foundMatch = false;
-            const alternatives = event.results[0];
-            for (let i = 0; i < alternatives.length; i++) {
-                const transcript = alternatives[i].transcript.toUpperCase().trim();
-                if (checkMatch(transcript)) {
-                    foundMatch = true;
-                    break;
-                }
-            }
-            processResult(foundMatch);
-        };
-
-        recognition.onend = () => {
-            isListening = false;
-            document.getElementById('btn-mic').classList.remove('listening');
-            document.getElementById('speech-status').style.display = 'none';
-            stopVisualizer();
-        };
-
-        recognition.onerror = () => {
-            isListening = false;
-            document.getElementById('btn-mic').classList.remove('listening');
-            stopVisualizer();
-        };
-    }
-
-    function hearAndSkip() {
-        if (isListening) recognition.stop();
-        speak(currentWord);
-        nextRound();
-    }
-
-    function checkMatch(guess) {
-        const target = currentWord.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-        const cleanedGuess = guess.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-        return (cleanedGuess === target || cleanedGuess.includes(target) || (target.length > 2 && target.includes(cleanedGuess)));
-    }
-
-    function processResult(isCorrect) {
-        const wordEl = document.getElementById('word');
-        if (isCorrect) {
-            score++;
-            document.getElementById('score').textContent = score;
-            wordEl.classList.add('correct-anim');
-            playSound('correct');
-            setTimeout(() => nextRound(), 1000);
-        } else {
-            retries++;
-            if (retries < 3) {
-                wordEl.classList.add('retry-anim');
-                playSound('retry');
-                setTimeout(() => {
-                    wordEl.classList.remove('retry-anim');
-                }, 800);
+        function spellNext() {
+            if (i < letters.length) {
+                const char = letters[i].textContent;
+                letters.forEach(l => l.classList.remove('active'));
+                letters[i].classList.add('active');
+                
+                speak(char, 0.6, () => {
+                    i++;
+                    setTimeout(spellNext, 200);
+                });
             } else {
-                score = 0;
-                document.getElementById('score').textContent = score;
-                wordEl.classList.add('wrong-anim');
-                playSound('wrong');
-                speak(currentWord);
-                setTimeout(() => nextRound(), 1500);
+                letters.forEach(l => l.classList.remove('active'));
+                setTimeout(() => {
+                    speak(currentWord, 0.8, () => {
+                        isSpelling = false;
+                        document.getElementById('btn-speak').classList.remove('disabled');
+                        setTimeout(nextRound, 1500);
+                    });
+                }, 400);
             }
         }
+        spellNext();
     }
 
-    function nextRound(staySameLevel = false) {
-        retries = 0; // Reset retries for new word
+    function nextRound() {
+        if (isSpelling) return;
         const wordEl = document.getElementById('word');
         wordEl.classList.add('next-anim');
         
         setTimeout(() => {
-            // Determine word length based on score
+            wordCounter++;
             let len = 4;
-            if (score < 3) len = Math.random() > 0.5 ? 3 : 4;
-            else if (score < 6) len = Math.random() > 0.5 ? 4 : 5;
-            else if (score < 10) len = Math.random() > 0.5 ? 5 : 6;
-            else len = Math.random() > 0.5 ? 6 : 7;
+            if (wordCounter < 5) len = 3;
+            else if (wordCounter < 12) len = 4;
+            else if (wordCounter < 20) len = 5;
+            else if (wordCounter < 30) len = 6;
+            else len = 7;
 
             const list = wordLists[currentLang][len] || wordLists[currentLang][4];
             let next;
             do { next = list[Math.floor(Math.random() * list.length)]; } while (next === currentWord);
             
             currentWord = next;
-            wordEl.textContent = currentWord;
-            wordEl.classList.remove('next-anim', 'correct-anim', 'wrong-anim');
+            wordEl.innerHTML = '';
+            currentWord.split('').forEach(char => {
+                const span = document.createElement('span');
+                span.className = 'letter';
+                span.textContent = char;
+                wordEl.appendChild(span);
+            });
+            
+            wordEl.classList.remove('next-anim');
         }, 500);
     }
 
     function resetGame() {
-        score = 0;
-        document.getElementById('score').textContent = score;
+        wordCounter = 0;
         document.getElementById('start-overlay').style.display = 'flex';
         currentWord = '';
         document.getElementById('word').textContent = '...';
     }
 
     document.addEventListener('click', function init(e) {
-        if (e.target.closest('#btn-restart') || e.target.closest('.lang-switcher')) return;
+        if (e.target.closest('#btn-restart') || e.target.closest('.lang-switcher') || e.target.closest('#btn-speak')) return;
         if (audioCtx.state === 'suspended') audioCtx.resume();
-        
-        // Request mic permission on first click
-        if (!permissionRequested) {
-            requestMicPermission();
-        }
-
         if (!currentWord) {
             document.getElementById('start-overlay').style.display = 'none';
             nextRound();
         }
     });
+
+    // Warm up voices
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
 
 </script>
 
