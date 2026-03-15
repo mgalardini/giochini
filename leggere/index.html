@@ -320,7 +320,10 @@
     function speak(text, rate = 0.8, onEnd) {
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(text);
+            
+            // Aggressively normalize to lowercase and remove any non-alpha chars
+            const cleanText = text.toLowerCase().trim();
+            const u = new SpeechSynthesisUtterance(cleanText);
             u.lang = currentLang;
             u.rate = rate;
             u.pitch = 1.15;
