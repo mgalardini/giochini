@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Giochini v3.6 🎮</title>
+    <title>Giochini 🎮</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🎮</text></svg>">
+    <link rel="apple-touch-icon" id="apple-touch-icon">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <style>
@@ -90,9 +91,9 @@
         .grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: clamp(15px, 2vw, 30px);
+            gap: clamp(15px, 2.5vw, 25px);
             width: 100%;
-            max-width: 1000px;
+            max-width: 950px; /* Reduced for smaller squares */
             margin: 0 auto;
             align-content: start;
         }
@@ -112,9 +113,9 @@
 
         .game-card {
             background: rgba(255, 255, 255, 0.6);
-            border-radius: clamp(15px, 3.5vw, 40px);
-            border: 6px solid white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: clamp(15px, 3.5vw, 35px);
+            border: clamp(3px, 0.6vw, 6px) solid white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -123,33 +124,33 @@
             backdrop-filter: blur(10px);
             box-sizing: border-box;
             overflow: hidden;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             position: relative;
         }
 
         .game-card.empty {
             background: rgba(255, 255, 255, 0.1);
-            border: 4px dashed rgba(255, 255, 255, 0.3);
+            border: 3px dashed rgba(255, 255, 255, 0.3);
             box-shadow: none;
             pointer-events: none;
         }
 
         .game-icon {
-            font-size: clamp(2.5rem, 7vw, 5.5rem);
+            font-size: clamp(2rem, 6vw, 5rem); /* Slightly smaller icons */
             line-height: 1;
             display: block;
         }
 
         .game-name {
-            font-size: clamp(0.8rem, 1.8vw, 1.4rem);
+            font-size: clamp(0.8rem, 1.6vw, 1.3rem); /* Slightly smaller names */
             font-weight: 900;
             color: #444;
             text-align: center;
-            line-height: 1.2;
+            line-height: 1.1;
             word-wrap: break-word;
             overflow-wrap: anywhere;
             padding: 0 5px;
-            height: 3em; 
+            height: 2.5em; 
             display: flex;
             align-items: flex-start;
             justify-content: center;
@@ -159,14 +160,14 @@
 
         /* Landscape optimization */
         @media (orientation: landscape) {
-            .grid { gap: clamp(20px, 3vw, 40px); max-width: 1000px; }
-            .game-icon { font-size: clamp(3rem, 8vw, 6.5rem); }
-            .game-name { font-size: clamp(0.9rem, 2vw, 1.6rem); }
+            .grid { gap: clamp(15px, 2.5vw, 30px); max-width: 950px; }
+            .game-icon { font-size: clamp(2.5rem, 8vw, 6rem); }
+            .game-name { font-size: clamp(0.9rem, 2vw, 1.5rem); }
         }
     </style>
 </head>
 <body>
-<!-- Launcher v3.6 -->
+<!-- Launcher v3.7 -->
 
 <div class="container">
     <div class="header">
@@ -210,6 +211,20 @@
 </div>
 
 <script>
+    // Generate apple-touch-icon
+    (function() {
+        const c = document.createElement('canvas');
+        c.width = 180; c.height = 180;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#c5b3e6'; // pastel-purple
+        ctx.beginPath(); ctx.roundRect(0, 0, 180, 180, 36); ctx.fill();
+        ctx.font = '120px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🎮', 90, 96);
+        document.getElementById('apple-touch-icon').href = c.toDataURL('image/png');
+    })();
+
     const translations = {
         it: {
             orologio: "Orologio",
