@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Giochini 🎮</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🎮</text></svg>">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <style>
+        :root {
+            --pastel-pink: #ffd1dc;
+            --pastel-blue: #a2d2ff;
+            --pastel-yellow: #fdfd96;
+            --pastel-green: #b4f8c8;
+            --pastel-red: #ff968a;
+            --pastel-purple: #c5b3e6;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+            overflow: hidden;
+            background: linear-gradient(135deg, 
+                var(--pastel-pink) 0%, 
+                var(--pastel-yellow) 20%, 
+                var(--pastel-green) 40%, 
+                var(--pastel-blue) 60%, 
+                var(--pastel-purple) 80%, 
+                var(--pastel-pink) 100%);
+            background-size: 400% 400%;
+            animation: rainbowBG 15s ease infinite;
+        }
+
+        @keyframes rainbowBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 40px;
+        }
+
+        .lang-switcher {
+            display: flex;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        .lang-btn {
+            font-size: 2.2rem;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 5px;
+            transition: transform 0.2s;
+            filter: grayscale(0.8);
+        }
+
+        .lang-btn.active {
+            filter: grayscale(0);
+            transform: scale(1.2);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            width: 100%;
+            max-width: 1300px;
+            margin: 0 auto;
+            align-content: start;
+        }
+
+        .game-card {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: clamp(20px, 5vw, 50px);
+            border: clamp(4px, 1vw, 10px) solid white;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            transition: transform 0.2s, background-color 0.3s;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            backdrop-filter: blur(10px);
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            min-height: 0;
+            padding: 10px;
+        }
+
+        .game-card:active {
+            transform: scale(0.96);
+        }
+
+        .game-card.empty {
+            background: rgba(255, 255, 255, 0.1);
+            border: 6px dashed rgba(255, 255, 255, 0.3);
+            box-shadow: none;
+            pointer-events: none;
+        }
+
+        .game-card.empty:active { transform: none; }
+
+        .game-icon {
+            font-size: clamp(2rem, 7vw, 5rem);
+            margin-bottom: 5px;
+            line-height: 1;
+            flex-shrink: 1;
+        }
+
+        .game-name {
+            font-size: clamp(0.9rem, 2.2vw, 1.8rem);
+            font-weight: 900;
+            color: #444;
+            text-align: center;
+            padding: 0 10px;
+            line-height: 1.1;
+            word-wrap: break-word;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 2.5em; 
+        }
+
+        /* Landscape optimization */
+        @media (orientation: landscape) {
+            .grid { gap: 30px; max-width: 1300px; }
+            .game-icon { font-size: clamp(3rem, 9vw, 6.5rem); }
+            .game-name { font-size: clamp(1.1rem, 2.8vw, 2rem); }
+        }
+    </style>
+</head>
+<body>
+<!-- Launcher v2.4 -->
+
+<div class="container">
+    <div class="header">
+        <div class="lang-switcher">
+            <button class="lang-btn" onclick="setLanguage('it')" title="Italiano">🇮🇹</button>
+            <button class="lang-btn" onclick="setLanguage('de')" title="Deutsch">🇩🇪</button>
+            <button class="lang-btn" onclick="setLanguage('en')" title="English">🇬🇧</button>
+            <button class="lang-btn" onclick="setLanguage('es')" title="Español">🇪🇸</button>
+        </div>
+    </div>
+
+    <div class="grid">
+        <a href="orologio/index.html" class="game-card">
+            <div class="game-icon">🕒</div>
+            <div class="game-name" id="name-orologio">Orologio</div>
+        </a>
+        <a href="sinistra-destra/index.html" class="game-card">
+            <div class="game-icon">⬅️➡️</div>
+            <div class="game-name" id="name-sd">Sinistra o Destra?</div>
+        </a>
+        <a href="leggere/index.html" class="game-card">
+            <div class="game-icon">📖</div>
+            <div class="game-name" id="name-leggere">Leggere</div>
+        </a>
+        <div class="game-card empty"></div>
+        
+        <div class="game-card empty"></div>
+        <div class="game-card empty"></div>
+        <div class="game-card empty"></div>
+        <div class="game-card empty"></div>
+    </div>
+</div>
+
+<script>
+    const translations = {
+        it: {
+            orologio: "Orologio",
+            sd: "Sinistra o Destra?",
+            leggere: "Leggere"
+        },
+        en: {
+            orologio: "Clock",
+            sd: "Left or Right?",
+            leggere: "Read"
+        },
+        de: {
+            orologio: "Uhr",
+            sd: "Links oder Rechts?",
+            leggere: "Lesen"
+        },
+        es: {
+            orologio: "Reloj",
+            sd: "¿Izquierda o Derecha?",
+            leggere: "Leer"
+        }
+    };
+
+    function setLanguage(lang) {
+        // Update localStorage for all games
+        localStorage.setItem('game_lang', lang);
+        localStorage.setItem('game_lang_sd', lang);
+        localStorage.setItem('game_lang_leggere', lang);
+        
+        // Update UI
+        document.getElementById('name-orologio').textContent = translations[lang].orologio;
+        document.getElementById('name-sd').textContent = translations[lang].sd;
+        document.getElementById('name-leggere').textContent = translations[lang].leggere;
+
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('onclick').includes(`'${lang}'`));
+        });
+    }
+
+    // Auto-detect language
+    (function initLang() {
+        const savedLang = localStorage.getItem('game_lang') || localStorage.getItem('game_lang_sd') || localStorage.getItem('game_lang_leggere');
+        if (savedLang && translations[savedLang]) {
+            setLanguage(savedLang);
+        } else {
+            const navLang = navigator.language.split('-')[0];
+            if (translations[navLang]) setLanguage(navLang);
+            else setLanguage('en');
+        }
+    })();
+</script>
+
+</body>
+</html>
