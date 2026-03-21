@@ -352,6 +352,15 @@
             background-color: var(--pastel-blue);
         }
 
+        .speak-button.speaking {
+            animation: bounce-small 0.6s infinite;
+        }
+
+        @keyframes bounce-small {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
         .start-overlay {
             position: absolute;
             top: 0;
@@ -630,13 +639,26 @@
             }
             
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = currentLang;
+            // Map simple code to BCP 47
+            const langMap = { it: 'it-IT', de: 'de-DE', en: 'en-GB', es: 'es-ES' };
+            utterance.lang = langMap[currentLang] || currentLang;
             
+            const btn = document.querySelector('.speak-button');
+            utterance.onstart = () => btn.classList.add('speaking');
+            utterance.onend = () => btn.classList.remove('speaking');
+            utterance.onerror = () => btn.classList.remove('speaking');
+
             const voices = window.speechSynthesis.getVoices();
-            const preferredVoice = voices.find(v => v.lang.startsWith(currentLang) && (v.name.includes('Alice') || v.name.includes('Natural') || v.name.includes('Siri') || v.name.includes('Google')));
+            const preferredVoice = voices.find(v => 
+                v.lang.startsWith(currentLang) && 
+                (v.name.includes('Alice') || v.name.includes('Natural') || v.name.includes('Siri') || v.name.includes('Google') || v.name.includes('Anna') || v.name.includes('Monica') || v.name.includes('Helena'))
+            );
             
             if (preferredVoice) {
                 utterance.voice = preferredVoice;
+            } else {
+                // Better fallback: find first voice that matches exactly or starts with
+                utterance.voice = voices.find(v => v.lang === langMap[currentLang]) || voices.find(v => v.lang.startsWith(currentLang));
             }
 
             utterance.rate = 0.85;

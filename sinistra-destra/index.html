@@ -362,13 +362,19 @@
         if ('speechSynthesis' in window) {
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = currentLang;
+            const langMap = { it: 'it-IT', de: 'de-DE', en: 'en-GB', es: 'es-ES' };
+            utterance.lang = langMap[currentLang] || currentLang;
             
             const voices = window.speechSynthesis.getVoices();
-            const preferredVoice = voices.find(v => v.lang.startsWith(currentLang) && (v.name.includes('Alice') || v.name.includes('Natural') || v.name.includes('Siri') || v.name.includes('Google')));
+            const preferredVoice = voices.find(v => 
+                v.lang.startsWith(currentLang) && 
+                (v.name.includes('Alice') || v.name.includes('Natural') || v.name.includes('Siri') || v.name.includes('Google') || v.name.includes('Anna') || v.name.includes('Monica') || v.name.includes('Helena'))
+            );
             
             if (preferredVoice) {
                 utterance.voice = preferredVoice;
+            } else {
+                utterance.voice = voices.find(v => v.lang === langMap[currentLang]) || voices.find(v => v.lang.startsWith(currentLang));
             }
 
             utterance.rate = 0.85;
