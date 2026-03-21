@@ -368,7 +368,7 @@
             const voices = window.speechSynthesis.getVoices();
             const preferredVoice = voices.find(v => 
                 v.lang.startsWith(currentLang) && 
-                (v.name.includes('Alice') || v.name.includes('Natural') || v.name.includes('Siri') || v.name.includes('Google') || v.name.includes('Anna') || v.name.includes('Monica') || v.name.includes('Helena'))
+                (v.name.includes('Siri') || v.name.includes('Natural') || v.name.includes('Alice') || v.name.includes('Anna') || v.name.includes('Monica') || v.name.includes('Helena') || v.name.includes('Samantha') || v.name.includes('Daniel') || v.name.includes('Paulina'))
             );
             
             if (preferredVoice) {
